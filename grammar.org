@@ -1,0 +1,59 @@
+* Original grammar :noexport:
+expr	::=	num 
+                | lvalue 
+                | incrop expr 
+                | expr incrop 
+                | expr binop expr 
+                | (expr)
+lvalue	::=	$expr
+incrop	::=	++ 
+                | --
+binop	::=	+ 
+                | -
+                | \epsilon  
+num	::=	0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+* LL(1) grammar
+string  ::=     expr string'
+string' ::=     _ expr string' 
+                | \epsilon
+expr    ::=     term expr'
+                | (expr)
+expr'   ::=     binop term expr'
+                | \epsilon 
+term    ::=     incrop term
+                | num
+                | term'
+term'   ::=     term" A
+                | num
+A       ::=     incrop A
+                | \epsilon
+term"   ::=     lvalue
+                | num
+                | expr
+lvalue  ::=     $expr
+num     ::=     0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+binop	::=	+ | -
+incrop	::=	++ | --
+
+* First
+  FIRST(string)   = FIRST(string') = {\epsilon, _}
+  FIRST(string')  = {\epsilon, _}
+  FIRST(expr)     = FIRST(term) = {(, ++, --, $, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(expr')    = FIRST(binop) U FIRST(term) U {\epsilon} = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(term)     = FIRST(incrop) U FIRST(num) U FIRST(term') = {++, --, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(term')    = FIRST(term") U FIRST(A) = {++, --, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(A)        = FIRST(incrop) = {++, --}
+  FIRST(term")    = FIRST(lvalue) U FIRST(num) U FIRST(expr) = {(, ++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(num)      = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(binop)    = {+, -}
+  FIRST(incrop)   = {++, --}
+* Follow
+  FOLLOW(string)  = {\epsilon}
+  FOLLOW(string') = FOLLOW(string)
+  FOLLOW(expr)    = FIRST(string') U FOLLOW(term") = {{\epsilon, _}}
+  FOLLOW(expr')   = FOLLOW(expr) = {\epsilon, _, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FOLLOW(term)    = FIRST(expr') = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FOLLOW(term')   = FOLLOW(term) = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FOLLOW(A)       = FOLLOW(term') = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FOLLOW(term")   = FIRST(A) = {++, --}
