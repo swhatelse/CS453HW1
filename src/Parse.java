@@ -34,15 +34,14 @@ public class Parse {
 	public static void main(String[] args) {
 		try {
 			Scanner sc = new Scanner(new File("test")).useDelimiter("\\s*\n\\s*");
-			//Pattern p = Pattern.compile(Expression.REG_POST);
-			Pattern p = Pattern.compile(Expression.REG_EXPR);
-			//MatchResult result = sc.match();
-		    // for (int i=0; i < result.groupCount(); i++)
-		    //     System.out.println(result.group(i));
+			Pattern p = Pattern.compile(Expression.REG_PRE);
 			while(sc.hasNext()){
 				String s = sc.next();
 				Matcher m = p.matcher(s);
-				System.out.println(s + " = " + m.matches());
+				while(m.find()){
+					System.out.println(m.group().length());
+					System.out.println(s + " = " + m.group());
+				}
 			}
 			sc.close();
 		} catch (FileNotFoundException e) {
