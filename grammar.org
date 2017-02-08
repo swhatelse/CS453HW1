@@ -17,68 +17,44 @@ num	::=	0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 R1 : string  ::=     expr string'
 R2 : string' ::=     _ expr string' 
 R3 :                 | \epsilon
-R4 : expr    ::=     term expr'
-R5 : expr'   ::=     binop term expr'
-R6 :                 | \epsilon 
-R7 : term    ::=     incrop term
-R8 :                 | num
-R9:                 | term'
-R10: term'   ::=     term" A
-R11:                 | num
-R12: A       ::=     incrop A
-R13:                 | \epsilon
-R14: term"   ::=     lvalue
-R15:                 | num
-R16:                 | (expr)
-R17: lvalue  ::=     Fterm
-R18: num     ::=     0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-R19: binop   ::=     + | -
-R20: incrop  ::=     ++ | --
-
+R4 : expr    ::=     pre expr'
+R5 : expr'   ::=     binop pre expr'
+R6 :                 | \epsilon
+R7 : pre     ::=     incrop pre
+R8 :                 | post
+R9 : post    ::=     ref post'
+R9 : post'   ::=     incrop post'
+R10:                 | \epsilon
+R11: ref     ::=     Fterm
+R12:                 | term
+R13: term    ::=     num
+R14:                 | (expr)
+R15: binop   ::=     + | -
+R16: incrop  ::=     ++ | --
+R17: num     ::=     0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 * First
-  FIRST(string)   = FIRST(expr) = {(, ++, --, $, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
+  FIRST(string)   = FIRST(expr) = {(, ++, --, F, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
   FIRST(string')  = {\epsilon, _}
-
-  FIRST(expr)     = FIRST(term) = {(, ++, --, $, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
-  FIRST(expr')    = FIRST(binop) U FIRST(term) U {\epsilon} = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
-  FIRST(term)     = FIRST(incrop) U FIRST(num) U FIRST(term') = {++,
-  --, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
-  FIRST(term')    = FIRST(term") U FIRST(A) = {++, --, 0, 1, 2, 3, 4,
-  5, 6, 7, 8, 9}
-
-  FIRST(A)        = FIRST(incrop) = {++, --}
-
-  FIRST(term")    = FIRST(lvalue) U FIRST(num) U FIRST(expr) = {F,(,
-  ++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
+  FIRST(expr)     = FIRST(pre) = {++, --, F, (, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(expr')    = FIRST(binop) U {\epsilon} = {\epsilon, +, -}
+  FIRST(pre)      = FIRST(incrop) U FIRST(post) = {++, --, F, (, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(post)     = FIRST(ref) = {F, (, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(post')    = FIRST(incrop) U {\epsilon}= {\epsilon, ++, --}
+  FIRST(ref )     = {F} U FIRST(term) = {F, (, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FIRST(term)     = FIRST(num) U {(} = {(, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
   FIRST(num)      = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
   FIRST(binop)    = {+, -}
-
   FIRST(incrop)   = {++, --}
 * Follow
   FOLLOW(string)  = {$}
-
-  FOLLOW(string') = FOLLOW(string) U FIRST(string') = {$, _}
-
-  FOLLOW(expr)    = FIRST(string') U FOLLOW(term") = {$, ), ++, --}
-
-  FOLLOW(expr')   = FOLLOW(expr)= {$,), ++, --}
-
-  FOLLOW(term)    = FIRST(expr') = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4,
-  5, 6, 7, 8, 9}
-
-  FOLLOW(term')   = FOLLOW(term) = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4,
-  5, 6, 7, 8, 9}
-
-  FOLLOW(A)       = FOLLOW(term') = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4,
-  5, 6, 7, 8, 9}
-
-  FOLLOW(term")   = FIRST(A) = {++, --}
+  FOLLOW(string') = FOLLOW(string) = {$}
+  FOLLOW(expr)    = FIRST(string') U {)} = {$, _, )}
+  FOLLOW(expr')   = FOLLOW(expr)= {$, _, )}
+  FOLLOW(pre)     = FIRST(expr') = {\epsilon, +, -}
+  FOLLOW(post)    = FOLLOW(pre) = {\epsilon, +, -}
+  FOLLOW(post')   = FOLLOW(post) = {\epsilon, +, -}
+  FOLLOW(ref)     = FIRST(post') = {\epsilon, ++, --}
+  FOLLOW(term)    = FOLLOW(ref) = {\epsilon, ++, --}
 * Parse table
   |         | num | binop | incrop | F   | $   | _  | (  | )  |
   |---------+-----+-------+--------+-----+-----+----+----+----|
