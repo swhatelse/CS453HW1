@@ -14,46 +14,81 @@ binop	::=	+
 num	::=	0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
 * LL(1) grammar
-string  ::=     expr string'
-string' ::=     _ expr string' 
-                | \epsilon
-expr    ::=     term expr'
-                | (expr)
-expr'   ::=     binop term expr'
-                | \epsilon 
-term    ::=     incrop term
-                | num
-                | term'
-term'   ::=     term" A
-                | num
-A       ::=     incrop A
-                | \epsilon
-term"   ::=     lvalue
-                | num
-                | expr
-lvalue  ::=     $expr
-num     ::=     0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-binop	::=	+ | -
-incrop	::=	++ | --
+R1 : string  ::=     expr string'
+R2 : string' ::=     _ expr string' 
+R3 :                 | \epsilon
+R4 : expr    ::=     term expr'
+R5 : expr'   ::=     binop term expr'
+R6 :                 | \epsilon 
+R7 : term    ::=     incrop term
+R8 :                 | num
+R9:                 | term'
+R10: term'   ::=     term" A
+R11:                 | num
+R12: A       ::=     incrop A
+R13:                 | \epsilon
+R14: term"   ::=     lvalue
+R15:                 | num
+R16:                 | (expr)
+R17: lvalue  ::=     Fterm
+R18: num     ::=     0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+R19: binop   ::=     + | -
+R20: incrop  ::=     ++ | --
 
 * First
-  FIRST(string)   = FIRST(string') = {\epsilon, _}
+  FIRST(string)   = FIRST(expr) = {(, ++, --, $, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
   FIRST(string')  = {\epsilon, _}
+
   FIRST(expr)     = FIRST(term) = {(, ++, --, $, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
   FIRST(expr')    = FIRST(binop) U FIRST(term) U {\epsilon} = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-  FIRST(term)     = FIRST(incrop) U FIRST(num) U FIRST(term') = {++, --, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-  FIRST(term')    = FIRST(term") U FIRST(A) = {++, --, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+  FIRST(term)     = FIRST(incrop) U FIRST(num) U FIRST(term') = {++,
+  --, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+  FIRST(term')    = FIRST(term") U FIRST(A) = {++, --, 0, 1, 2, 3, 4,
+  5, 6, 7, 8, 9}
+
   FIRST(A)        = FIRST(incrop) = {++, --}
-  FIRST(term")    = FIRST(lvalue) U FIRST(num) U FIRST(expr) = {(, ++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+  FIRST(term")    = FIRST(lvalue) U FIRST(num) U FIRST(expr) = {F,(,
+  ++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
   FIRST(num)      = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
   FIRST(binop)    = {+, -}
+
   FIRST(incrop)   = {++, --}
 * Follow
-  FOLLOW(string)  = {\epsilon}
-  FOLLOW(string') = FOLLOW(string)
-  FOLLOW(expr)    = FIRST(string') U FOLLOW(term") = {{\epsilon, _}}
-  FOLLOW(expr')   = FOLLOW(expr) = {\epsilon, _, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-  FOLLOW(term)    = FIRST(expr') = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-  FOLLOW(term')   = FOLLOW(term) = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-  FOLLOW(A)       = FOLLOW(term') = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  FOLLOW(string)  = {$}
+
+  FOLLOW(string') = FOLLOW(string) U FIRST(string') = {$, _}
+
+  FOLLOW(expr)    = FIRST(string') U FOLLOW(term") = {$, ), ++, --}
+
+  FOLLOW(expr')   = FOLLOW(expr)= {$,), ++, --}
+
+  FOLLOW(term)    = FIRST(expr') = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4,
+  5, 6, 7, 8, 9}
+
+  FOLLOW(term')   = FOLLOW(term) = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4,
+  5, 6, 7, 8, 9}
+
+  FOLLOW(A)       = FOLLOW(term') = {\epsilon, (,++, --, +, -, 0, 1, 2, 3, 4,
+  5, 6, 7, 8, 9}
+
   FOLLOW(term")   = FIRST(A) = {++, --}
+* Parse table
+  |         | num | binop | incrop | F   | $   | _  | (  | )  |
+  |---------+-----+-------+--------+-----+-----+----+----+----|
+  | string  |     |       |        |     | R1  | R1 |    |    |
+  | string' |     |       |        |     | R2  | R2 |    |    |
+  | expr    | R4  |       | R4     |     |     |    | R4 |    |
+  | expr'   | R6  | R6    | R6     |     | R7  |    | R6 | R6 |
+  | term    | R9  |       | R8     |     |     |    |    |    |
+  | term'   | R12 |       | R11    |     |     |    |    |    |
+  | A       |     |       | R13    |     |     |    |    |    |
+  | term"   | R16 |       | R17    | R15 | R17 |    |    |    |
+  | lvalue  |     |       |        | R18 |     |    |    |    |
+
