@@ -25,7 +25,7 @@ R8 :                 | post
 R9 : post    ::=     ref post'
 R9 : post'   ::=     incrop post'
 R10:                 | \epsilon
-R11: ref     ::=     Fterm
+R11: ref     ::=     F ref
 R12:                 | term
 R13: term    ::=     num
 R14:                 | (expr)

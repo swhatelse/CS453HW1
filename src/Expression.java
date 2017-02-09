@@ -20,10 +20,11 @@ public class Expression {
 	
 	public static String REG_TERM = "(" + REG_NUM + "|\\([^\\(|.]*\\))";
 	public static String REG_REF = "F*" + REG_TERM;
+	public static String REG_POST_PRIME = "";
 	public static String REG_POST = REG_REF + REG_INCROP + "*";
 	public static String REG_PRE = REG_INCROP + "*" + REG_POST;
-	public static String REG_EXPR_PRIME = "(" + REG_BINOP + REG_PRE + ")*";
-	public static String REG_EXPR = REG_PRE + REG_EXPR_PRIME;
+	public static String REG_EXPR_PRIME = "(" + REG_BINOP + REG_PRE + ")";
+	public static String REG_EXPR = REG_PRE + REG_EXPR_PRIME + "*";
 	
 	public static String REG_EXPR_PAR = "\\(" + REG_EXPR + "\\)";
 	
@@ -36,7 +37,7 @@ public class Expression {
 		return m.matches();
 	}
 	
-	public static boolean isTerm(String s){
+	public static boolean isString(String s){
 		return isSomething(s, REG_STRING);
 	}
 	
@@ -46,5 +47,25 @@ public class Expression {
 	
 	public static boolean isExpr(String s){
 		return isSomething(s, REG_EXPR);
+	}
+	
+	public static boolean isExpr_Prime(String s){
+		return isSomething(s, REG_EXPR_PRIME);
+	}
+	
+	public static boolean isPre(String s){
+		return isSomething(s, REG_PRE);
+	}
+	
+	public static boolean isPost(String s){
+		return isSomething(s, REG_POST);
+	}
+	
+	public static boolean isRef(String s){
+		return isSomething(s, REG_REF);
+	}
+	
+	public static boolean isTerm(String s){
+		return isSomething(s, REG_TERM);
 	}
 }
