@@ -16,7 +16,7 @@ public class Expression {
 	
     public static String REG_NUM = "(\\d+)";
     public static String REG_INCROP = "((\\+\\+)|--)";
-	public static String REG_BINOP = "(\\+|-)";
+	public static String REG_BINOP = "[ ]*(\\+|-)[ ]*";
 	
 	public static String REG_TERM = "(" + REG_NUM + "|\\([^\\(|.]*\\))";
 	public static String REG_REF = "F*" + REG_TERM;
@@ -28,7 +28,7 @@ public class Expression {
 	
 	public static String REG_EXPR_PAR = "\\(" + REG_EXPR + "\\)";
 	
-	public static String REG_STRING_PRIME = "( " + REG_EXPR + ")*";
+	public static String REG_STRING_PRIME = "(^ [^\\+] " + REG_EXPR + ")*";
 	public static String REG_STRING = REG_EXPR + REG_STRING_PRIME;
 	
 	private static boolean isSomething(String s, String regex){

@@ -23,15 +23,15 @@ R6 :                 | \epsilon
 R7 : pre     ::=     incrop pre
 R8 :                 | post
 R9 : post    ::=     ref post'
-R9 : post'   ::=     incrop post'
-R10:                 | \epsilon
-R11: ref     ::=     F ref
-R12:                 | term
-R13: term    ::=     num
-R14:                 | (expr)
-R15: binop   ::=     + | -
-R16: incrop  ::=     ++ | --
-R17: num     ::=     0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+R10 : post'   ::=     incrop post'
+R11:                 | \epsilon
+R12: ref     ::=     F ref
+R13:                 | term
+R14: term    ::=     num
+R15:                 | (expr)
+R16: binop   ::=     + | -
+R17: incrop  ::=     ++ | --
+R18: num     ::=     0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 * First
   FIRST(string)   = FIRST(expr) = {(, ++, --, F, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
   FIRST(string')  = {\epsilon, _}
@@ -56,15 +56,15 @@ R17: num     ::=     0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
   FOLLOW(ref)     = FIRST(post') = {\epsilon, ++, --}
   FOLLOW(term)    = FOLLOW(ref) = {\epsilon, ++, --}
 * Parse table
-  |         | num | binop | incrop | F   | $   | _  | (  | )  |
-  |---------+-----+-------+--------+-----+-----+----+----+----|
-  | string  |     |       |        |     | R1  | R1 |    |    |
-  | string' |     |       |        |     | R2  | R2 |    |    |
-  | expr    | R4  |       | R4     |     |     |    | R4 |    |
-  | expr'   | R6  | R6    | R6     |     | R7  |    | R6 | R6 |
-  | term    | R9  |       | R8     |     |     |    |    |    |
-  | term'   | R12 |       | R11    |     |     |    |    |    |
-  | A       |     |       | R13    |     |     |    |    |    |
-  | term"   | R16 |       | R17    | R15 | R17 |    |    |    |
-  | lvalue  |     |       |        | R18 |     |    |    |    |
+  |         | num | binop | incrop | F   | $  | _  | (   | )  |
+  |---------+-----+-------+--------+-----+----+----+-----+----|
+  | string  | R1  |       | R1     | R1  | R1 | R1 | R1  |    |
+  | string' |     |       |        |     | R3 | R2 |     |    |
+  | expr    | R4  |       | R4     | R4  |    |    | R4  |    |
+  | expr'   |     | R5    |        |     | R6 |    |     | R5 |
+  | pre     | R8  |       | R7     | R8  |    |    | R8  |    |
+  | post    | R9  |       | R9     | R9  |    |    | R9  |    |
+  | post'   |     | R10   | R10    |     |    |    |     |    |
+  | ref     | R13 |       | R13    | R12 |    |    | R13 |    |
+  | term    | R14 |       |        |     |    |    | R15 |    |
 
