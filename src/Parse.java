@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.Vector;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +23,17 @@ public class Parse {
 	public static int TK_SPACE = 4;
 	public static int TK_LEFT_PAR = 5;
 	public static int TK_RIGHT_PAR = 6;
-	public static int TK_NUM = 7;
+	public static int TK_0 = 7;
+	public static int TK_1 = 8;
+	public static int TK_2 = 9;
+	public static int TK_3 = 10;
+	public static int TK_4 = 11;
+	public static int TK_5 = 12;
+	public static int TK_6 = 13;
+	public static int TK_7 = 14;
+	public static int TK_8 = 15;
+	public static int TK_9 = 16;
+	public static int TK_REF = 17;
 	
     public static String REG_NUM = "(\\d+)";
     public static String REG_INCROP = "((\\+\\+)|--)";
@@ -44,6 +55,7 @@ public class Parse {
 	private static Stack<String> stack;
 	private static boolean debug = false;
 	private static int linecount = 0;
+	private static Vector<Integer> tokens;
 
 	public static void printDebug(String s){
 		if(debug)
@@ -196,38 +208,92 @@ public class Parse {
 			printDebug(s);
 		}
 	}
+	
+	public static void tokenize(String s){
+		tokens = new Vector<Integer>();
+		
+		Pattern pplus = Pattern.compile("^\\+");
+		Pattern pminus = Pattern.compile("^-");
+		Pattern pincrop = Pattern.compile("^\\+\\+");
+		Pattern pdecrop = Pattern.compile("^--");
+		Pattern pref = Pattern.compile("^F");
+		Pattern plpar = Pattern.compile("^\\(");
+		Pattern prpar = Pattern.compile("^\\)");
+		Pattern p0 = Pattern.compile("^0");
+		Pattern p1 = Pattern.compile("^1");
+		Pattern p2 = Pattern.compile("^2");
+		Pattern p3 = Pattern.compile("^3");
+		Pattern p4 = Pattern.compile("^4");
+		Pattern p5 = Pattern.compile("^5");
+		Pattern p6 = Pattern.compile("^6");
+		Pattern p7 = Pattern.compile("^7");
+		Pattern p8 = Pattern.compile("^8");
+		Pattern p9 = Pattern.compile("^9");
+		
+		while(s.length() > 0){
+			Matcher mplus = pplus.matcher(s);
+			Matcher mminus = pminus.matcher(s);
+			Matcher mincrop = pincrop.matcher(s);
+			Matcher mdecrop = pdecrop.matcher(s);
+			Matcher mref = pref.matcher(s);
+			Matcher mlpar = plpar.matcher(s);
+			Matcher mrpar = prpar.matcher(s);
+			Matcher m0 = p0.matcher(s);
+			Matcher m1 = p1.matcher(s);
+			Matcher m2 = p2.matcher(s);
+			Matcher m3 = p3.matcher(s);
+			Matcher m4 = p4.matcher(s);
+			Matcher m5 = p5.matcher(s);
+			Matcher m6 = p6.matcher(s);
+			Matcher m7 = p7.matcher(s);
+			Matcher m8 = p8.matcher(s);
+			Matcher m9 = p9.matcher(s);
+			
+			if(mincrop.find()){ tokens.add(TK_INCR); s = s.substring(2);}
+			else if (mplus.find()){ tokens.add(TK_PLUS); s = s.substring(1);}
+			else if(mdecrop.find()){ tokens.add(TK_DECR); s = s.substring(2);}
+			else if(mminus.find()){ tokens.add(TK_MINUS); s = s.substring(1);}
+			else if(mref.find()){ tokens.add(TK_REF); s = s.substring(1);}
+			else if(mlpar.find()){ tokens.add(TK_LEFT_PAR); s = s.substring(1);}
+			else if(mrpar.find()){ tokens.add(TK_RIGHT_PAR); s = s.substring(1);}
+			else if(m0.find()){ tokens.add(TK_0); s = s.substring(1);}
+			else if(m1.find()){ tokens.add(TK_1); s = s.substring(1);}
+			else if(m2.find()){ tokens.add(TK_2); s = s.substring(1);}
+			else if(m3.find()){ tokens.add(TK_3); s = s.substring(1);}
+			else if(m4.find()){ tokens.add(TK_4); s = s.substring(1);}
+			else if(m5.find()){ tokens.add(TK_5); s = s.substring(1);}
+			else if(m6.find()){ tokens.add(TK_6); s = s.substring(1);}
+			else if(m7.find()){ tokens.add(TK_7); s = s.substring(1);}
+			else if(m8.find()){ tokens.add(TK_8); s = s.substring(1);}
+			else if(m9.find()){ tokens.add(TK_9); s = s.substring(1);}
+			else{s = s.substring(1);}
+		}
+		
+//		for(Integer i: tokens){
+//			System.out.println(i);
+//		}
+	}
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		try {
-			String filename = args[0]; 
-			String content = new String(Files.readAllBytes(Paths.get(filename)));
-			content = content.replaceAll("#.*", "");
-			Scanner sc = new Scanner(content).useDelimiter("\\s*\n\\s*");
-			Pattern p = Pattern.compile(REG_STRING);
-			while(sc.hasNext()){
-				linecount++;
-				stack = new Stack<String>();
-				String s = sc.next();
-				Matcher m = p.matcher(s);
-				if(m.matches()){		
-					System.out.print(s + " = ");
-					String(s);
-				}
-				else{	
-					printError();
-				}
-			}
-			sc.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
+		Scanner sc = new Scanner(System.in).useDelimiter("\\s*$\\s*");
+		tokenize(sc.next());
+		//Pattern p = Pattern.compile(REG_STRING);
+//		while(sc.hasNext()){
+//			linecount++;
+//			stack = new Stack<String>();
+//			String s = sc.next();
+//			Matcher m = p.matcher(s);
+//			if(m.matches()){		
+//				System.out.print(s + " = ");
+//				String(s);
+//			}
+//			else{	
+//				printError();
+//			}
+//		}
+		sc.close();
 	}
 
 }
