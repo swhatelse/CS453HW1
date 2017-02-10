@@ -106,7 +106,6 @@ public class Parse {
 	
 	public static void printRes(String s){
 		res += s;
-		//System.out.print(s);
 	}
 	
 	public static void printError(Token t){
@@ -157,21 +156,23 @@ public class Parse {
 	}
 	
 	public static void Expr_Prime(){
+		Token previousToken;
 		if(currentToken != null){
 			Stack<String> stack = new Stack<String>();
 			printDebug("Expr_Prime: " + currentToken);
 			if(currentToken.code == TK_BINOP){
 				stack.push(currentToken.value + " ");
+				previousToken = currentToken;
 				currentToken = getToken();
 				if(currentToken != null){
-				  Pre();
-				  if(!stack.empty()){
+					Pre();
+					if(!stack.empty()){
 						printRes(stack.pop());
 					}
 					Expr_Prime();
 				}
 				else{
-					printError(currentToken);
+					printError(previousToken);
 				}
 			}
 			else if (currentToken.code == TK_INCR | currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_RIGHT_PAR | currentToken.code == TK_NUM){

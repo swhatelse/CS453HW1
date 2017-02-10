@@ -18,7 +18,7 @@ R1 : string  ::=     expr string'
 R2 : string' ::=     _ expr string' 
 R3 :                 | \epsilon
 R4 : expr    ::=     pre expr'
-R5 : expr'   ::=     binop pre expr'
+lR5 : expr'   ::=     binop pre expr'
 R6 :                 | \epsilon
 R7 : pre     ::=     incrop pre
 R8 :                 | post
