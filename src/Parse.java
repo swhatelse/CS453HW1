@@ -16,24 +16,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Parse {
-	public static int TK_PLUS = 0;
-	public static int TK_MINUS = 1;
-	public static int TK_DECR = 2;
-	public static int TK_INCR = 3;
-	public static int TK_SPACE = 4;
-	public static int TK_LEFT_PAR = 5;
-	public static int TK_RIGHT_PAR = 6;
-	public static int TK_0 = 7;
-	public static int TK_1 = 8;
-	public static int TK_2 = 9;
-	public static int TK_3 = 10;
-	public static int TK_4 = 11;
-	public static int TK_5 = 12;
-	public static int TK_6 = 13;
-	public static int TK_7 = 14;
-	public static int TK_8 = 15;
-	public static int TK_9 = 16;
-	public static int TK_REF = 17;
+	public static final int TK_PLUS = 0;
+	public static final int TK_MINUS = 1;
+	public static final int TK_DECR = 2;
+	public static final int TK_INCR = 3;
+	public static final int TK_SPACE = 4;
+	public static final int TK_LEFT_PAR = 5;
+	public static final int TK_RIGHT_PAR = 6;
+	public static final int TK_0 = 7;
+	public static final int TK_1 = 8;
+	public static final int TK_2 = 9;
+	public static final int TK_3 = 10;
+	public static final int TK_4 = 11;
+	public static final int TK_5 = 12;
+	public static final int TK_6 = 13;
+	public static final int TK_7 = 14;
+	public static final int TK_8 = 15;
+	public static final int TK_9 = 16;
+	public static final int TK_REF = 17;
 	
     public static String REG_NUM = "(\\d+)";
     public static String REG_INCROP = "((\\+\\+)|--)";
@@ -212,7 +212,7 @@ public class Parse {
 	public static void tokenize(String s){
 		tokens = new Vector<Integer>();
 		
-		Pattern pplus = Pattern.compile("^\\+");
+		Pattern pplus = Pattern.compile("^( *\\+ *)");
 		Pattern pminus = Pattern.compile("^-");
 		Pattern pincrop = Pattern.compile("^\\+\\+");
 		Pattern pdecrop = Pattern.compile("^--");
@@ -269,9 +269,9 @@ public class Parse {
 			else{s = s.substring(1);}
 		}
 		
-//		for(Integer i: tokens){
-//			System.out.println(i);
-//		}
+		for(Integer i: tokens){
+			System.out.println(i);
+		}
 	}
 	/**
 	 * @param args
@@ -279,6 +279,29 @@ public class Parse {
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in).useDelimiter("\\s*$\\s*");
 		tokenize(sc.next());
+		
+		for(Integer t: tokens){
+			switch(t){
+				case TK_PLUS: break;	
+				case TK_MINUS : break;
+				case TK_DECR : break;
+				case TK_INCR : break;
+				case TK_SPACE : break;
+				case TK_LEFT_PAR : break;
+				case TK_RIGHT_PAR : break;
+				case TK_0 : break;
+				case TK_1 : break;
+				case TK_2 : break;
+				case TK_3 : break;
+				case TK_4 : break;
+				case TK_5 : break;
+				case TK_6 : break;
+				case TK_7 : break;
+				case TK_8 : break;
+				case TK_9 : break;
+				case TK_REF : break;
+			}
+		}
 		//Pattern p = Pattern.compile(REG_STRING);
 //		while(sc.hasNext()){
 //			linecount++;
