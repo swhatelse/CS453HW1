@@ -1,39 +1,93 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 import java.util.Vector;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import java.util.Scanner;
-import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Parse {
-	public static final int TK_PLUS = 0;
-	public static final int TK_MINUS = 1;
-	public static final int TK_DECR = 2;
-	public static final int TK_INCR = 3;
-	public static final int TK_SPACE = 4;
-	public static final int TK_LEFT_PAR = 5;
-	public static final int TK_RIGHT_PAR = 6;
-	public static final int TK_0 = 7;
-	public static final int TK_1 = 8;
-	public static final int TK_2 = 9;
-	public static final int TK_3 = 10;
-	public static final int TK_4 = 11;
-	public static final int TK_5 = 12;
-	public static final int TK_6 = 13;
-	public static final int TK_7 = 14;
-	public static final int TK_8 = 15;
-	public static final int TK_9 = 16;
-	public static final int TK_REF = 17;
+	static class Token{
+		public int code;
+		public int line;
+		public String value;
+		
+		public Token(int code, String value, int line){
+			this.code = code;
+			this.value = value;
+			this.line = line;
+		}
+		
+		public String toString(){
+			String sym = "";
+			switch (code){
+			case TK_BINOP : sym = "BINOP"; break;
+			case TK_INCR : sym = "INCR"; break;
+			case TK_NUM : sym = "NUM"; break;
+			case TK_LEFT_PAR : sym = "LPAR"; break;
+			case TK_RIGHT_PAR : sym = "RPAR"; break;
+			case TK_REF : sym = "REF"; break;
+			}
+			return sym + "(" + value + ")" + "<" + line + ">";
+		}
+	}
+	static class Lexer{
+		public static void tokenize(String s, int line){
+			
+			s = s.replaceAll("#.*$","");
+			
+			Pattern pbinop = Pattern.compile("^ *(\\+|-) *");
+			Pattern pincrop = Pattern.compile("^(\\+\\+|--)");
+			Pattern pref = Pattern.compile("^\\$");
+			Pattern plpar = Pattern.compile("^\\(");
+			Pattern prpar = Pattern.compile("^\\)");
+			Pattern pnum = Pattern.compile("^\\d+");
+			
+			while(s.length() > 0){
+				Matcher mbinop = pbinop.matcher(s);
+				Matcher mincrop = pincrop.matcher(s);
+				Matcher mref = pref.matcher(s);
+				Matcher mlpar = plpar.matcher(s);
+				Matcher mrpar = prpar.matcher(s);
+				Matcher mnum = pnum.matcher(s);
+				
+				if(mincrop.find()){ tokens.add(new Token(TK_INCR, mincrop.group(), line)); s = s.substring(mincrop.group().length());}
+				else if (mbinop.find()){ tokens.add(new Token(TK_BINOP, mbinop.group(), line)); s = s.substring(mbinop.group().length());}
+				else if(mref.find()){ tokens.add(new Token(TK_REF, mref.group(), line)); s = s.substring(mref.group().length());}
+				else if(mlpar.find()){ tokens.add(new Token(TK_LEFT_PAR, mlpar.group(), line)); s = s.substring(mlpar.group().length());}
+				else if(mrpar.find()){ tokens.add(new Token(TK_RIGHT_PAR, mrpar.group(), line)); s = s.substring(mrpar.group().length());}
+				else if(mnum.find()){ tokens.add(new Token(TK_NUM, mnum.group(), line)); s = s.substring(mnum.group().length());}			
+				else{s = s.substring(1);}
+			}
+		}
+	}
+	
+	static class Node{
+		public Node parent;
+		public List<Node> children = new ArrayList<Node>();
+		
+		public Node(Node parent){
+			this.parent = parent;
+		}
+	}
+	
+	public static final int TK_BINOP = 0;
+	public static final int TK_INCR = 1;
+	public static final int TK_SPACE = 2;
+	public static final int TK_LEFT_PAR = 3;
+	public static final int TK_RIGHT_PAR = 4;
+	public static final int TK_REF = 5;
+	public static final int TK_NUM = 6;
+	
+	public static final int NT_S = 100;
+	public static final int NT_SP = 101;
+	public static final int NT_E = 102;
+	public static final int NT_EP = 103;
+	public static final int NT_PRE = 104;
+	public static final int NT_POST = 105;
+	public static final int NT_POSTP = 106;
+	public static final int NT_R = 107;
+	public static final int NT_T = 108;
 	
     public static String REG_NUM = "(\\d+)";
     public static String REG_INCROP = "((\\+\\+)|--)";
@@ -55,8 +109,18 @@ public class Parse {
 	private static Stack<String> stack;
 	private static boolean debug = false;
 	private static int linecount = 0;
-	private static Vector<Integer> tokens;
+	private static Vector<Token> tokens;
+	private static Token currentToken;
 
+	private static Token getToken(){
+		if(tokens.size() > 0){
+			return tokens.remove(0);
+		}
+		else{
+			return null;
+		}
+	}
+	
 	public static void printDebug(String s){
 		if(debug)
 			System.out.println(s);
@@ -67,256 +131,162 @@ public class Parse {
 			System.out.print(s);
 	}
 	
-	public static void printError(){
-		System.out.println("Parse error in line " + linecount);
+	public static void printError(Token t){
+		System.out.println("Parse error in line " + t.line);
 	}
 	
-	public static void String(String s){
-		Pattern pexpr = Pattern.compile(REG_EXPR);
-	    Matcher mexpr = pexpr.matcher(s);
-		Pattern pstr_pr = Pattern.compile(REG_STRING_PRIME);
-		Matcher mstr_pr;
-		String part2;
-	    
-	    if(mexpr.find()){
-	    	part2 = s.substring(mexpr.group().length());
-	    	Expr(mexpr.group());
-	    	
-	    	printRes("_ ");
-		    
-		    mstr_pr = pstr_pr.matcher(part2);
-		    while(mstr_pr.find()){
-		    	String_Prime(mstr_pr.group());
-		    }		
-		    System.out.println("\nExpression parsed successfully");
+	public static void String(){
+		currentToken = getToken();
+		if(currentToken != null){
+			printDebug("String: " + currentToken);
+			if(currentToken.code == TK_INCR | currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_NUM){
+				Expr();
+				String_Prime();
+			}
+			else{
+				printError(currentToken);
+			}
+		}
+	}
+	
+	public static void String_Prime(){
+		if(currentToken != null){
+			printDebug("String_Prime: " + currentToken);
+			if(currentToken.code == TK_INCR | currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_NUM){
+				printRes("_ ");
+				Expr();
+				String_Prime();
+			}
+			else{
+				printError(currentToken);
+			}
+		}
+	}
+	
+	public static void Expr(){
+		printDebug("Expr: " + currentToken);
+	    if(currentToken.code == TK_INCR | currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_NUM){
+	    	Pre();
+	    	Expr_Prime();
 	    }
 	    else{
-	    	System.out.println("Error: Expression incorrect");
+	    	printError(currentToken);
 	    }
 	}
 	
-	public static void String_Prime(String s){
-    	printDebug("String' = " + s);
-    	
-    	Expr(s);
-	}
-	
-	public static void Expr(String s){
-		printDebug("Expr = " + s);
-		
-		Pattern ppre = Pattern.compile(REG_PRE);
-	    Matcher mpre = ppre.matcher(s);
-	    
-	    if(mpre.find()){
-	    	printDebug("pre = " + mpre.group());
-	    	Pre(mpre.group());
-	    	String part2 = s.substring(mpre.group().length());
-	    	Expr_Prime(part2);
-	    }
-	}
-	
-	public static void Expr_Prime(String s){
-    	printDebug("expr' = " + s);
-		Pattern pexpr_pr = Pattern.compile("("+REG_BINOP + REG_PRE+")");
-		Matcher mexpr_pr = pexpr_pr.matcher(s);
-		if(mexpr_pr.find()){
-			Pre(mexpr_pr.group());
-			stack.push(mexpr_pr.group().charAt(0) + " ");
-			if(!stack.empty()){
-				printRes(stack.pop());
+	public static void Expr_Prime(){
+		if(currentToken != null){
+			Stack<String> stack = new Stack<String>();
+			printDebug("Expr_Prime: " + currentToken);
+			if(currentToken.code == TK_BINOP){
+				stack.push(currentToken.value + " ");
+				currentToken = getToken();
+				if(currentToken != null){
+				  Pre();
+				  if(!stack.empty()){
+						printRes(stack.pop());
+					}
+					Expr_Prime();
+				}
+				else{
+					printError(currentToken);
+				}
 			}
-			Expr_Prime(s.substring(mexpr_pr.group().length()));
+			else if (currentToken.code == TK_INCR | currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_RIGHT_PAR | currentToken.code == TK_NUM){
+				
+			}
+			else{
+				printError(currentToken);
+			}	
 		}
-	}
+}
+
 	
-	public static void Pre(String s){
-		printDebug("pre = " + s);
-		String part2 = s;
-		Pattern pincrop = Pattern.compile("^" + REG_INCROP);
-		Matcher mincrop = pincrop.matcher(part2);
+	public static void Pre(){
+		printDebug("Pre: " + currentToken);
 		Stack<String> pre_stack = new Stack<String>();
-		while(mincrop.find()){
-			pre_stack.push(mincrop.group());
-			part2 = part2.substring(mincrop.group().length());
-			mincrop = pincrop.matcher(part2);
+		if(currentToken.code == TK_INCR){
+			pre_stack.push(currentToken.value);
+			currentToken = getToken();
+			if(currentToken != null){
+				Pre();
+			}
+		}
+		else if(currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_NUM){
+			Post();
+		}
+		else{
+			printError(currentToken);
 		}
 		
-		Pattern ppost = Pattern.compile(REG_POST);
-		Matcher mpost = ppost.matcher(s);
-		// As it is recursive we need to consume each pre incrop token
-		// until there are no more left
-        if(mpost.find()){
-			Post(part2);
-		}
-        
         while(!pre_stack.empty()){
         	printRes(pre_stack.pop() + "_ ");
         }
 	}
 	
-	public static void Post(String s){
-		printDebug("post = " + s);
-		Pattern pref = Pattern.compile(REG_REF);
-		Matcher mref = pref.matcher(s);
-		String part2;
-		if(mref.find()){
-			part2 = s.substring(mref.group().length());
-			Ref(mref.group());
-
-			Pattern pincrop = Pattern.compile(REG_INCROP);
-			Matcher mincrop = pincrop.matcher(part2);
-			while(mincrop.find()){
-				printRes("_" + mincrop.group() + " ");
-				part2 = part2.substring(mincrop.group().length());
-				mincrop = pincrop.matcher(part2);
+	public static void Post(){
+		printDebug("Post: " + currentToken);
+		if(currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_NUM){
+			Ref();
+			
+			while(currentToken != null && currentToken.code == TK_INCR){
+				printRes("_" + currentToken.value + " ");
+				currentToken = getToken();
 			}
 		}
+		else{
+			printError(currentToken);
+		}
 	}
 	
-	public static void Ref(String s){
-		printDebug("ref = " + s);
-		Pattern plval = Pattern.compile("^F");
-		Matcher mlval = plval.matcher(s);
-		
-		Pattern pterm = Pattern.compile(REG_TERM);
-		Matcher mterm = pterm.matcher(s);
-		if(mterm.find()){
-			Term(mterm.group());
+	public static void Ref(){
+		printDebug("Ref: " + currentToken);
+		Stack<String> stack = new Stack<String>();
+        while(currentToken != null && currentToken.code == TK_REF){
+        	stack.push(currentToken.value);
+        	currentToken = getToken();
+        }
+        if(currentToken.code == TK_NUM | currentToken.code == TK_LEFT_PAR){
+			Term();
 		}
+        else{
+        	printError(currentToken);
+        }
 
-		while(mlval.find()){
-			printRes(mlval.group() + " ");
+		while(!stack.empty()){
+			printRes(stack.pop() + " ");
 		}
 	}
 	
-	public static void Term(String s){
-		printDebug("term = " + s);
-		Pattern pnum = Pattern.compile("^" + REG_NUM);
-		Matcher mnum = pnum.matcher(s);
-		
-		Pattern ppar = Pattern.compile("^" + REG_EXPR_PAR);
-		Matcher mpar = ppar.matcher(s);
-		
-		if(mnum.find()){
-			printRes(mnum.group() + " ");
+	public static void Term(){
+		printDebug("Term: " + currentToken);
+		if(currentToken.code == TK_NUM){
+			printRes(currentToken.value + " ");
+			currentToken = getToken();
 		}
-		else if(mpar.find()){
-			String part2 = mpar.group().substring(1, mpar.group().length() - 1);
-			Expr(part2);
+		else if(currentToken.code == TK_LEFT_PAR){
+			currentToken = getToken();
+			if(currentToken != null)
+				Expr();
 		}
 		else{
-			printDebug(s);
+			printError(currentToken);
 		}
 	}
-	
-	public static void tokenize(String s){
-		tokens = new Vector<Integer>();
-		
-		Pattern pplus = Pattern.compile("^( *\\+ *)");
-		Pattern pminus = Pattern.compile("^-");
-		Pattern pincrop = Pattern.compile("^\\+\\+");
-		Pattern pdecrop = Pattern.compile("^--");
-		Pattern pref = Pattern.compile("^F");
-		Pattern plpar = Pattern.compile("^\\(");
-		Pattern prpar = Pattern.compile("^\\)");
-		Pattern p0 = Pattern.compile("^0");
-		Pattern p1 = Pattern.compile("^1");
-		Pattern p2 = Pattern.compile("^2");
-		Pattern p3 = Pattern.compile("^3");
-		Pattern p4 = Pattern.compile("^4");
-		Pattern p5 = Pattern.compile("^5");
-		Pattern p6 = Pattern.compile("^6");
-		Pattern p7 = Pattern.compile("^7");
-		Pattern p8 = Pattern.compile("^8");
-		Pattern p9 = Pattern.compile("^9");
-		
-		while(s.length() > 0){
-			Matcher mplus = pplus.matcher(s);
-			Matcher mminus = pminus.matcher(s);
-			Matcher mincrop = pincrop.matcher(s);
-			Matcher mdecrop = pdecrop.matcher(s);
-			Matcher mref = pref.matcher(s);
-			Matcher mlpar = plpar.matcher(s);
-			Matcher mrpar = prpar.matcher(s);
-			Matcher m0 = p0.matcher(s);
-			Matcher m1 = p1.matcher(s);
-			Matcher m2 = p2.matcher(s);
-			Matcher m3 = p3.matcher(s);
-			Matcher m4 = p4.matcher(s);
-			Matcher m5 = p5.matcher(s);
-			Matcher m6 = p6.matcher(s);
-			Matcher m7 = p7.matcher(s);
-			Matcher m8 = p8.matcher(s);
-			Matcher m9 = p9.matcher(s);
-			
-			if(mincrop.find()){ tokens.add(TK_INCR); s = s.substring(2);}
-			else if (mplus.find()){ tokens.add(TK_PLUS); s = s.substring(1);}
-			else if(mdecrop.find()){ tokens.add(TK_DECR); s = s.substring(2);}
-			else if(mminus.find()){ tokens.add(TK_MINUS); s = s.substring(1);}
-			else if(mref.find()){ tokens.add(TK_REF); s = s.substring(1);}
-			else if(mlpar.find()){ tokens.add(TK_LEFT_PAR); s = s.substring(1);}
-			else if(mrpar.find()){ tokens.add(TK_RIGHT_PAR); s = s.substring(1);}
-			else if(m0.find()){ tokens.add(TK_0); s = s.substring(1);}
-			else if(m1.find()){ tokens.add(TK_1); s = s.substring(1);}
-			else if(m2.find()){ tokens.add(TK_2); s = s.substring(1);}
-			else if(m3.find()){ tokens.add(TK_3); s = s.substring(1);}
-			else if(m4.find()){ tokens.add(TK_4); s = s.substring(1);}
-			else if(m5.find()){ tokens.add(TK_5); s = s.substring(1);}
-			else if(m6.find()){ tokens.add(TK_6); s = s.substring(1);}
-			else if(m7.find()){ tokens.add(TK_7); s = s.substring(1);}
-			else if(m8.find()){ tokens.add(TK_8); s = s.substring(1);}
-			else if(m9.find()){ tokens.add(TK_9); s = s.substring(1);}
-			else{s = s.substring(1);}
-		}
-		
-		for(Integer i: tokens){
-			System.out.println(i);
-		}
-	}
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Scanner sc = new Scanner(System.in).useDelimiter("\\s*$\\s*");
-		tokenize(sc.next());
-		
-		for(Integer t: tokens){
-			switch(t){
-				case TK_PLUS: break;	
-				case TK_MINUS : break;
-				case TK_DECR : break;
-				case TK_INCR : break;
-				case TK_SPACE : break;
-				case TK_LEFT_PAR : break;
-				case TK_RIGHT_PAR : break;
-				case TK_0 : break;
-				case TK_1 : break;
-				case TK_2 : break;
-				case TK_3 : break;
-				case TK_4 : break;
-				case TK_5 : break;
-				case TK_6 : break;
-				case TK_7 : break;
-				case TK_8 : break;
-				case TK_9 : break;
-				case TK_REF : break;
-			}
+		Scanner sc = new Scanner(System.in).useDelimiter("\\s*\n\\s*");
+		tokens = new Vector<Token>();
+		while(sc.hasNext()){
+			linecount++;
+			Lexer.tokenize(sc.next(),linecount);	
 		}
-		//Pattern p = Pattern.compile(REG_STRING);
-//		while(sc.hasNext()){
-//			linecount++;
-//			stack = new Stack<String>();
-//			String s = sc.next();
-//			Matcher m = p.matcher(s);
-//			if(m.matches()){		
-//				System.out.print(s + " = ");
-//				String(s);
-//			}
-//			else{	
-//				printError();
-//			}
-//		}
 		sc.close();
+		String();
+		System.out.println();
 	}
 
 }
