@@ -79,38 +79,16 @@ public class Parse {
 	public static final int TK_REF = 5;
 	public static final int TK_NUM = 6;
 	
-	public static final int NT_S = 100;
-	public static final int NT_SP = 101;
-	public static final int NT_E = 102;
-	public static final int NT_EP = 103;
-	public static final int NT_PRE = 104;
-	public static final int NT_POST = 105;
-	public static final int NT_POSTP = 106;
-	public static final int NT_R = 107;
-	public static final int NT_T = 108;
-	
     public static String REG_NUM = "(\\d+)";
     public static String REG_INCROP = "((\\+\\+)|--)";
 	public static String REG_BINOP = "[ ]*(\\+|-)[ ]*";
 	
-	public static String REG_TERM = "(" + REG_NUM + "|\\([^\\(|.]*\\))";
-	public static String REG_REF = "F*" + REG_TERM;
-	public static String REG_POST_PRIME = "";
-	public static String REG_POST = REG_REF + REG_INCROP + "*";
-	public static String REG_PRE = REG_INCROP + "*" + REG_POST;
-	public static String REG_EXPR_PRIME = "(" + REG_BINOP + REG_PRE + ")";
-	public static String REG_EXPR = REG_PRE + REG_EXPR_PRIME + "*";
-	
-	public static String REG_EXPR_PAR = "\\(" + REG_EXPR + "\\)";
-	
-	public static String REG_STRING_PRIME = "(^ [^\\+] " + REG_EXPR + ")*";
-	public static String REG_STRING = REG_EXPR + REG_STRING_PRIME;
-	
-	private static Stack<String> stack;
 	private static boolean debug = false;
 	private static int linecount = 0;
 	private static Vector<Token> tokens;
 	private static Token currentToken;
+	private static boolean erroneous = false;
+	private static String res = "";
 
 	private static Token getToken(){
 		if(tokens.size() > 0){
@@ -127,12 +105,13 @@ public class Parse {
 	}
 	
 	public static void printRes(String s){
-		if(!debug)
-			System.out.print(s);
+		res += s;
+		//System.out.print(s);
 	}
 	
 	public static void printError(Token t){
-		System.out.println("Parse error in line " + t.line);
+		erroneous = true;
+		System.out.println("Parse error in line <" + t.line + ">");
 	}
 	
 	public static void String(){
@@ -153,9 +132,12 @@ public class Parse {
 		if(currentToken != null){
 			printDebug("String_Prime: " + currentToken);
 			if(currentToken.code == TK_INCR | currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_NUM){
-				printRes("_ ");
 				Expr();
+				printRes("_ ");
 				String_Prime();
+			}
+			else if(currentToken.code == TK_RIGHT_PAR){
+				
 			}
 			else{
 				printError(currentToken);
@@ -286,7 +268,10 @@ public class Parse {
 		}
 		sc.close();
 		String();
-		System.out.println();
+		if(!erroneous){
+			if(!debug)
+				System.out.println(res + "Expression parsed successfully");
+		}
 	}
 
 }
