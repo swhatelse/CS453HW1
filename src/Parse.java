@@ -52,7 +52,7 @@ public class Parse {
 				Matcher mnum = pnum.matcher(s);
 				
 				if(mincrop.find()){ tokens.add(new Token(TK_INCR, mincrop.group(), line)); s = s.substring(mincrop.group().length());}
-				else if (mbinop.find()){ tokens.add(new Token(TK_BINOP, mbinop.group(), line)); s = s.substring(mbinop.group().length());}
+				else if (mbinop.find()){ tokens.add(new Token(TK_BINOP, mbinop.group().replaceAll(" ", ""), line)); s = s.substring(mbinop.group().length());}
 				else if(mref.find()){ tokens.add(new Token(TK_REF, mref.group(), line)); s = s.substring(mref.group().length());}
 				else if(mlpar.find()){ tokens.add(new Token(TK_LEFT_PAR, mlpar.group(), line)); s = s.substring(mlpar.group().length());}
 				else if(mrpar.find()){ tokens.add(new Token(TK_RIGHT_PAR, mrpar.group(), line)); s = s.substring(mrpar.group().length());}
@@ -203,6 +203,9 @@ public class Parse {
 			if(currentToken != null){
 				Pre();
 			}
+			else{
+				printError(previousToken);
+			}
 		}
 		else if(currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_NUM){
 			Post();
@@ -238,9 +241,13 @@ public class Parse {
         	stack.push(currentToken.value);
         	currentToken = getToken();
         }
-        if(currentToken.code == TK_NUM | currentToken.code == TK_LEFT_PAR){
+
+        if(currentToken != null && (currentToken.code == TK_NUM | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_INCR)){
 			Term();
 		}
+        else if(currentToken == null){
+        	printError(previousToken);
+        }
         else{
         	printError(currentToken);
         }
@@ -261,6 +268,9 @@ public class Parse {
 			currentToken = getToken();
 			if(currentToken != null)
 				Expr();
+		}
+		else if(currentToken.code == TK_INCR){
+			Pre();
 		}
 		else{
 			printError(currentToken);
