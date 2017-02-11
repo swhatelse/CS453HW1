@@ -86,11 +86,14 @@ public class Parse {
 	private static boolean debug = false;
 	private static int linecount = 0;
 	private static Vector<Token> tokens;
-	private static Token currentToken;
+	private static Token currentToken = null;
+	private static Token previousToken = null;
 	private static boolean erroneous = false;
 	private static String res = "";
+	private static int par_level = 0;
 
 	private static Token getToken(){
+		previousToken = currentToken;
 		if(tokens.size() > 0){
 			return tokens.remove(0);
 		}
@@ -147,8 +150,16 @@ public class Parse {
 	public static void Expr(){
 		printDebug("Expr: " + currentToken);
 	    if(currentToken.code == TK_INCR | currentToken.code == TK_REF | currentToken.code == TK_LEFT_PAR | currentToken.code == TK_NUM){
-	    	Pre();
-	    	Expr_Prime();
+    		Pre();	
+    		Expr_Prime();
+
+	    	if(currentToken != null && currentToken.code == TK_RIGHT_PAR){
+	    		if(par_level < 1){
+	    			printError(currentToken);
+	    		}
+	    		par_level--;
+	    		currentToken = getToken();
+	    	}
 	    }
 	    else{
 	    	printError(currentToken);
@@ -156,13 +167,11 @@ public class Parse {
 	}
 	
 	public static void Expr_Prime(){
-		Token previousToken;
 		if(currentToken != null){
 			Stack<String> stack = new Stack<String>();
 			printDebug("Expr_Prime: " + currentToken);
 			if(currentToken.code == TK_BINOP){
 				stack.push(currentToken.value + " ");
-				previousToken = currentToken;
 				currentToken = getToken();
 				if(currentToken != null){
 					Pre();
@@ -248,6 +257,7 @@ public class Parse {
 			currentToken = getToken();
 		}
 		else if(currentToken.code == TK_LEFT_PAR){
+			par_level++;
 			currentToken = getToken();
 			if(currentToken != null)
 				Expr();
@@ -269,6 +279,10 @@ public class Parse {
 		}
 		sc.close();
 		String();
+		if(par_level > 0){
+			printError(previousToken);
+		}
+		
 		if(!erroneous){
 			if(!debug)
 				System.out.println(res + "Expression parsed successfully");
